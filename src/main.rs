@@ -7,14 +7,16 @@ use hbb_common::{
     udp::FramedSocket,
 };
 use std::net::SocketAddr;
+use std::env;
+use std::collections::HashMap;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let mut socket = FramedSocket::new("0.0.0.0:21116").await.unwrap();
     let listener = new_listener("0.0.0.0:21116", false).await.unwrap();
     let rlistener = new_listener("0.0.0.0:21117", false).await.unwrap();
-    let mut id_map = std::collections::HashMap::new();
-    let relay_server = std::env::var("IP").unwrap();
+    let mut id_map = HashMap::new();
+    let relay_server = env::var("IP").unwrap();
     let mut saved_stream = None;
     loop {
         tokio::select! {
@@ -71,7 +73,7 @@ async fn relay(
     stream: FramedStream,
     peer: FramedStream,
     socket: &mut FramedSocket,
-    id_map: &mut std::collections::HashMap<String, SocketAddr>,
+    id_map: &mut HashMap<String, SocketAddr>,
 ) {
     let mut peer = peer;
     let mut stream = stream;
@@ -104,7 +106,7 @@ async fn handle_udp(
     socket: &mut FramedSocket,
     bytes: BytesMut,
     addr: SocketAddr,
-    id_map: &mut std::collections::HashMap<String, SocketAddr>,
+    id_map: &mut HashMap<String, SocketAddr>,
 ) {
     if let Ok(msg_in) = RendezvousMessage::parse_from_bytes(&bytes) {
         match msg_in.union {
