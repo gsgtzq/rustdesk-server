@@ -55,7 +55,9 @@ async fn main() {
                                         if let Ok((stream_b, _)) = rlistener.accept().await {
                                             let mut stream_b = FramedStream::from(stream_b, addr);
                                             stream_b.next_timeout(3_000).await;
-                                            relay(stream_a, stream_b, &mut socket, &mut id_map).await;
+                                            tokio::spawn(async  {
+                                                relay(stream_a, stream_b).await;
+                                            });
                                         }
                                     }
                                 }
@@ -72,8 +74,8 @@ async fn main() {
 async fn relay(
     stream: FramedStream,
     peer: FramedStream,
-    socket: &mut FramedSocket,
-    id_map: &mut HashMap<String, SocketAddr>,
+    // socket: &mut FramedSocket,
+    // id_map: &mut HashMap<String, SocketAddr>,
 ) {
     let mut peer = peer;
     let mut stream = stream;
@@ -81,9 +83,9 @@ async fn relay(
     stream.set_raw();
     loop {
         tokio::select! {
-            Some(Ok((bytes, addr))) = socket.next() => {
-                handle_udp(socket, bytes, SocketAddr::from(addr), id_map).await;
-            }
+            // Some(Ok((bytes, addr))) = socket.next() => {
+                // handle_udp(socket, bytes, SocketAddr::from(addr), id_map).await;
+            // }
             res = peer.next() => {
                 if let Some(Ok(bytes)) = res {
                     stream.send_bytes(bytes.into()).await.ok();
